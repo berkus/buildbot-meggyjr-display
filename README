@@ -1,0 +1,18 @@
+Buildbot Meggy Jr. Display widget.
+
+This program will display your buildbot status on a Meggy Jr.
+
+Requirements:
+   * A buildbot server
+   * A Meggy Jr (get it from the Evil Mad Scientist)
+   * An RS-232 cord for your Meggy.  Get that from the evil scientist as well.
+
+Howto
+-----
+1) Program your Meggy Jr wtih the MeggyJr_RemoteDraw_115200.pde
+2) configure your mjbb.ini file.  Should be pretty self-explanatory.
+3) run the program.
+
+That's about it.
+
+Well, I modded muy MeggyJr so that it runs from the 5V on the RS-232 cable, rather than batteries.
