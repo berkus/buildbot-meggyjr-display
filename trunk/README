@@ -11,7 +11,9 @@ Howto
 -----
 1) Program your Meggy Jr wtih the MeggyJr_RemoteDraw_115200.pde
 2) configure your mjbb.ini file.  Should be pretty self-explanatory.
-3) run the program.
+3) Use inkscape to edit the mjbb.svg file to put your build names on it.
+4) run the program:  
+     # python mjbb.py mjbb.ini
 
 That's about it.
 
