@@ -23,7 +23,7 @@
 # * MeggyJr serial format is simple:
 # *   host              meggy                   description
 # *   'h'               responds with 0xff      hello
-# *   'd' x y color     no response             draw a pixel at x y in
+# *   'd' x y color 'D' no response             draw a pixel at x y in
 # *                                             color.  colors are:
 # *                                             0=dark, 
 # *                                             1=red,
@@ -152,6 +152,7 @@ states = {
     "success"  : mj.dim_green,
     "building" : mj.vilot,
     "failed"   : mj.red,
+    "offline"  : mj.white,
     }
 
 
@@ -183,7 +184,7 @@ class CylonThread(threading.Thread):
         
         
 ct = CylonThread(mj)
-ct.start()
+#ct.start()
 
 
 def get_build_status(url_base, build):
@@ -192,8 +193,10 @@ def get_build_status(url_base, build):
     url = "%s/builders" % (url_base)
     f = urllib.urlopen(url)
     j = json.load(f)
-    state = j[build]['state'] # 'building' or 'idle'
-
+    #print json.dumps(j, indent=4)
+    state = j[build]['state'] # 'building' or 'idle', or 'offline'
+    if (state == 'offline'):
+        return 'offline'
     url = "%s/builders/%s/builds/-1" % (url_base, build)
     f = urllib.urlopen(url)
     j = json.load(f)
@@ -206,14 +209,17 @@ def get_build_status(url_base, build):
             state = 'success'
     return state
 
+count = 0
 while (1):
     i = 0
     for build in builds:
         state = get_build_status(url_base, build)
         color = states[state]
-        print color
+        if (state == 'offline') and (count % 2) == 0:
+            color = mj.dark
         mj.lightRow(i, color)
         i = i + 1
     time.sleep(1)
+    count = count + 1
 quitting = 1
 
