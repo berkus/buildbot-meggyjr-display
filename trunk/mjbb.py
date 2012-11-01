@@ -184,7 +184,7 @@ class CylonThread(threading.Thread):
         
         
 ct = CylonThread(mj)
-#ct.start()
+ct.start()
 
 
 def get_build_status(url_base, build):
