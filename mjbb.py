@@ -180,7 +180,6 @@ class CylonThread(threading.Thread):
             self.mj.sendPx(this, 7, self.mj.vilot)
             self.mj.sendPx(last, 7, self.mj.dark)
             time.sleep(0.1)
-            print quitting
         sys.exit(0)
     def quit(self):
         self.quitting = 1
