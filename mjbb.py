@@ -47,6 +47,7 @@
 # *  
 #
 import time
+import signal
 import urllib2 as urllib
 import json
 import serial
@@ -69,6 +70,8 @@ tty      = cp.get   ('main', 'tty')
 builders = cp.get   ('main', 'builders')
 builds = builders.split(',')
 url_base = "http://%s:%d/json" % (host, port)
+
+quitting = 0
 
 class MeggyJr:
     colors = {
@@ -169,45 +172,62 @@ class Cylon:
             self.dir = -self.dir
             self.val = self.val + 2 * self.dir
         return self.last, self.val
-quitting = 0
+
 class CylonThread(threading.Thread):
     def run(self):
-        while(not quitting):
+        while(self.quitting == 0):
             last, this = self.cylon.next()
             self.mj.sendPx(this, 7, self.mj.vilot)
             self.mj.sendPx(last, 7, self.mj.dark)
             time.sleep(0.1)
+            print quitting
+        sys.exit(0)
+    def quit(self):
+        self.quitting = 1
     def __init__(self, mj):
         threading.Thread.__init__(self)
+        self.quitting = 0
         self.mj = mj
         self.cylon = Cylon()
         
         
-ct = CylonThread(mj)
-ct.start()
-
-
 def get_build_status(url_base, build):
     """Get the build status from the build server.  This will return either 'success', 'failed', or 'building'.  Building means success-so-far-but-still-building."""
     # First, get the builder status
     url = "%s/builders" % (url_base)
-    f = urllib.urlopen(url)
-    j = json.load(f)
-    #print json.dumps(j, indent=4)
-    state = j[build]['state'] # 'building' or 'idle', or 'offline'
-    if (state == 'offline'):
-        return 'offline'
-    url = "%s/builders/%s/builds/-1" % (url_base, build)
-    f = urllib.urlopen(url)
-    j = json.load(f)
-    txt = j["text"]
-    if (len(txt) >= 1):
-        if (txt[0] == u'failed'):
-            state = 'failed'
-    if (len(txt) >= 2):
-        if (txt[1] == u'successful'):
-            state = 'success'
+    try:
+        f = urllib.urlopen(url, timeout=5)
+        j = json.load(f)
+        #print json.dumps(j, indent=4)
+        state = j[build]['state'] # 'building' or 'idle', or 'offline'
+        if (state == 'offline'):
+            return 'offline'
+        url = "%s/builders/%s/builds/-1" % (url_base, build)
+        f = urllib.urlopen(url)
+        j = json.load(f)
+        txt = j["text"]
+        if (len(txt) >= 1):
+            if (txt[0] == u'failed'):
+                state = 'failed'
+        if (len(txt) >= 2):
+            if (txt[1] == u'successful'):
+                state = 'success'
+    except URLError:
+        state='offline'
     return state
+
+    
+ct = CylonThread(mj)
+
+def handler(signum, frame):
+    print "Got Ctrl-c"
+    quitting = 1
+    ct.quit()
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, handler)
+
+ct.start()
 
 count = 0
 while (1):
@@ -221,5 +241,4 @@ while (1):
         i = i + 1
     time.sleep(1)
     count = count + 1
-quitting = 1
 
